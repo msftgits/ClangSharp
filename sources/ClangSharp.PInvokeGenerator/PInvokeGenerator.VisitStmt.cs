@@ -391,9 +391,10 @@ namespace ClangSharp
 
         private void VisitDeclRefExpr(DeclRefExpr declRefExpr)
         {
-            if ((declRefExpr.Decl is EnumConstantDecl enumConstantDecl) && (declRefExpr.DeclContext != enumConstantDecl.DeclContext) && (enumConstantDecl.DeclContext is NamedDecl namedDecl))
+            if ((declRefExpr.Decl is EnumConstantDecl { DeclContext: NamedDecl namedDecl } enumConstantDecl) &&
+                (declRefExpr.DeclContext != (namedDecl.Name is "" ? declRefExpr.TranslationUnit.TranslationUnitDecl : enumConstantDecl.DeclContext)))
             {
-                var enumName = GetRemappedCursorName(namedDecl);
+                var enumName = string.IsNullOrEmpty(namedDecl.Name) ? _config.MethodClassName : GetRemappedCursorName(namedDecl);
                 _outputBuilder.AddUsingDirective($"static {_config.Namespace}.{enumName}");
             }
 

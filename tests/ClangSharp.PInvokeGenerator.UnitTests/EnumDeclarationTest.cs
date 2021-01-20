@@ -279,6 +279,100 @@ namespace ClangSharp.Test
         }
 
         [Fact]
+        public async Task AutoUsingStaticTest()
+        {
+            var inputContents = @"enum MyEnum1 : int
+{
+    MyEnum1_Value1 = 1,
+};
+
+enum MyEnum2 : int
+{
+    MyEnum2_Value1 = MyEnum1_Value1,
+};
+";
+
+            var expectedOutputContents = @"using static ClangSharp.Test.MyEnum1;
+
+namespace ClangSharp.Test
+{
+    public enum MyEnum1
+    {
+        MyEnum1_Value1 = 1,
+    }
+
+    public enum MyEnum2
+    {
+        MyEnum2_Value1 = MyEnum1_Value1,
+    }
+}
+";
+
+            await ValidateGeneratedBindingsAsync(inputContents, expectedOutputContents);
+        }
+
+        [Fact]
+        public async Task AutoUsingStaticForAnonymousEnumTest()
+        {
+            var inputContents = @"enum
+{
+    MyEnum1_Value1 = 1,
+};
+
+enum MyEnum2 : int
+{
+    MyEnum2_Value1 = MyEnum1_Value1,
+};
+";
+
+            var expectedOutputContents = @"using static ClangSharp.Test.Methods;
+
+namespace ClangSharp.Test
+{
+    public enum MyEnum2
+    {
+        MyEnum2_Value1 = MyEnum1_Value1,
+    }
+
+    public static partial class Methods
+    {
+        public const int MyEnum1_Value1 = 1;
+    }
+}
+";
+
+            await ValidateGeneratedBindingsAsync(inputContents, expectedOutputContents);
+        }
+
+        [Fact]
+        public async Task NoUsingStaticForAnonymousEnumInSameFileTest()
+        {
+            var inputContents = @"enum
+{
+    MyEnum1_Value1 = 1,
+};
+
+const int MyEnum2_Value1 = MyEnum1_Value1 + 1;
+";
+
+            var expectedOutputContents = @"namespace ClangSharp.Test
+{
+    public static partial class Methods
+    {
+        public const int MyEnum1_Value1 = 1;
+
+        [NativeTypeName(""const int"")]
+        public const int MyEnum2_Value1 = (int)(MyEnum1_Value1) + 1;
+    }
+}
+";
+
+            await ValidateGeneratedBindingsAsync(inputContents, expectedOutputContents);
+        }
+
+
+
+        [Fact]
         public async Task WithNamespaceTest()
         {
             var inputContents = @"enum MyEnum1 : int
